@@ -4,13 +4,17 @@ from urllib.parse import unquote
 
 from config import STATIC_DIR
 
+EXCLUDED_DIRECTORIES = [
+    "Backgrounds",
+    "unreachable",
+]
 
 class FileService:
     @staticmethod
     def get_all_files() -> List[str]:
         files = []
         for file_path in STATIC_DIR.rglob("*"):
-            if file_path.is_file():
+            if file_path.is_file() and file_path.parent.name not in EXCLUDED_DIRECTORIES:
                 rel_path = file_path.relative_to(STATIC_DIR)
                 files.append(str(rel_path))
         return files

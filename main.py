@@ -1,12 +1,11 @@
+import uuid
+from pathlib import Path
+from urllib.parse import unquote
+
+import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-from starlette.websockets import WebSocketState
-import os
-import uvicorn
-import uuid
-from urllib.parse import unquote
 
 app = FastAPI()
 
@@ -31,6 +30,10 @@ async def home():
                     body {
                         font-family: Arial, sans-serif;
                         background-color: #1c2e4a;
+                        background-image: url("/static/Backgrounds/Palais.png");
+                        background-size: 100% auto; 
+                        background-repeat: no-repeat; 
+                        background-position: center; 
                         text-align: center;
                         padding: 20px;
                         margin: 0;
@@ -68,8 +71,8 @@ async def home():
                 </style>
             </head>
             <body>
-                <h1>File Sharing System</h1>
-                <p><a href="/manager">Manage Files</a></p>
+                <h1>Vampire: La Masquarade</h1>
+                <h2>Paris at night</h2>
                 <script>
                     const ws = new WebSocket("ws://" + window.location.host + "/ws/home");
                     ws.onmessage = (event) => {
@@ -245,6 +248,10 @@ async def display(unique_id: str):
                         body {{
                             font-family: Arial, sans-serif;
                             background-color: #1c2e4a;
+                            background-image: url("/static/Backgrounds/Palais.png");
+                            background-size: 100% auto; 
+                            background-repeat: no-repeat; 
+                            background-position: center; 
                             margin: 0;
                             padding: 20px;
                             min-height: 100vh;

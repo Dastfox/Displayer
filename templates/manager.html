@@ -1,0 +1,107 @@
+<!-- templates/manager.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Manager</title>
+    <style>
+        .file-button {
+            display: block;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            width: 80%;
+            max-width: 400px;
+        }
+        .selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Manager</h1>
+    {% for file in files %}
+    <button
+        class="file-button {% if file == selected_file %}selected{% endif %}"
+        onclick="selectFile('{{ file }}')">
+        {{ file }}
+    </button>
+    {% endfor %}
+
+    <script>
+        // Connect to SSE endpoint
+        const eventSource = new EventSource('/events');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'file_change') {
+                // Refresh the manager page to update selection
+                location.reload();
+            }
+        };
+
+        function selectFile(filename) {
+            fetch('/select/' + encodeURIComponent(filename), {
+                method: 'POST'
+            });
+        }
+    </script>
+</body>
+</html>
+
+<!-- templates/display.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Display</title>
+    <style>
+        #content {
+            width: 100%;
+            height: 100vh;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+
+    <script>
+        let currentTimestamp = '';
+        const contentDiv = document.getElementById('content');
+
+        // Connect to SSE endpoint
+        const eventSource = new EventSource('/events');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'file_change') {
+                updateContent(data.timestamp);
+            }
+        };
+
+        async function updateContent(timestamp) {
+            if (timestamp === currentTimestamp) return;
+            currentTimestamp = timestamp;
+
+            const response = await fetch(`/get_file_content/${timestamp}`);
+            const data = await response.json();
+
+            if (data.type === 'blank') {
+                contentDiv.innerHTML = '<h1>No file selected</h1>';
+            }
+            else if (data.type === 'html') {
+                contentDiv.innerHTML = data.content;
+            }
+            else if (data.type === 'file') {
+                contentDiv.innerHTML = `<img src="/static/${data.path}" style="max-width: 100%;">`;
+            }
+        }
+
+        // Load initial content
+        updateContent('{{ initial_file }}');
+    </script>
+</body>
+</html>

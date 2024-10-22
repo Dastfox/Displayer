@@ -1,107 +1,161 @@
-<!-- templates/manager.html -->
 <!DOCTYPE html>
-<html>
-<head>
-    <title>File Manager</title>
-    <style>
-        .file-button {
-            display: block;
-            margin: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-            cursor: pointer;
-            width: 80%;
-            max-width: 400px;
-        }
-        .selected {
-            background-color: #4CAF50;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <h1>File Manager</h1>
-    {% for file in files %}
-    <button
-        class="file-button {% if file == selected_file %}selected{% endif %}"
-        onclick="selectFile('{{ file }}')">
-        {{ file }}
-    </button>
-    {% endfor %}
-
-    <script>
-        // Connect to SSE endpoint
-        const eventSource = new EventSource('/events');
-
-        eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.type === 'file_change') {
-                // Refresh the manager page to update selection
-                location.reload();
+<html lang="fr">
+    <head>
+        <title>File Manager</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #1c2e4a;
+                text-align: center;
+                padding: 20px;
+                margin: 0;
+                color: white;
             }
-        };
+            h1 {
+                color: white;
+                font-size: 24px;
+                margin-bottom: 30px;
+            }
+            .files-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+                padding: 10px;
+            }
+            .file-button {
+                width: 100%;
+                padding: 15px;
+                font-size: 16px;
+                color: white;
+                background-color: #2c3e60;
+                border: 1px solid #34495e;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s, transform 0.2s;
+                word-break: break-all;
+            }
+            .file-button:hover {
+                background-color: #34495e;
+                transform: translateY(-2px);
+            }
+            .file-button:active {
+                transform: translateY(0);
+            }
+            .file-button.active {
+                background-color: #27ae60;
+                border-color: #2ecc71;
+            }
+            .file-button.active:hover {
+                background-color: #2ecc71;
+            }
+            .home-button {
+                background-color: #c0392b;
+                border-color: #e74c3c;
+            }
+            .home-button:hover {
+                background-color: #e74c3c;
+            }
+            .home-button.active {
+                background-color: #27ae60;
+                border-color: #2ecc71;
+            }
+            #confirmation {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: rgba(46, 204, 113, 0.9);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-weight: bold;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            #confirmation.show {
+                opacity: 1;
+            }
+            @media (max-width: 600px) {
+                body {
+                    padding: 10px;
+                }
+                h1 {
+                    font-size: 20px;
+                    margin-bottom: 20px;
+                }
+                .file-button {
+                    padding: 12px;
+                    font-size: 14px;
+                }
+                .files-container {
+                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                    gap: 10px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>File Manager</h1>
+        <div class="files-container">
+            {{buttons}}
+        </div>
+        <p id="confirmation"></p>
+       <script>
+            const ws = new WebSocket("ws://" + window.location.host + "/ws/manager");
 
-        function selectFile(filename) {
-            fetch('/select/' + encodeURIComponent(filename), {
-                method: 'POST'
+            function showConfirmation(message) {
+                const confirmation = document.getElementById('confirmation');
+                confirmation.innerText = message;
+                confirmation.classList.add('show');
+                setTimeout(() => {
+                    confirmation.classList.remove('show');
+                }, 3000);
+            }
+
+            function updateActiveButton(filePath) {
+                // Remove active class from all buttons
+                document.querySelectorAll('.file-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+
+                if (!filePath) {
+                    // If no file is selected, activate home button
+                    document.getElementById('home-button').classList.add('active');
+                } else {
+                    // Find and activate the button for the current file
+                    const buttons = document.querySelectorAll('.file-button');
+                    buttons.forEach(button => {
+                        if (button.getAttribute('data-file') === filePath) {
+                            button.classList.add('active');
+                        }
+                    });
+                }
+            }
+
+            function selectFile(file) {
+                const encodedFile = encodeURIComponent(file);
+                fetch('/select?file=' + encodedFile, { method: 'GET' })
+                    .then(response => response.json())
+                    .then(data => {
+                        showConfirmation(data.message);
+                        updateActiveButton(file);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showConfirmation('Error selecting file');
+                    });
+            }
+
+            // Initialize active button based on current URL
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPath = window.location.pathname;
+                if (currentPath === '/') {
+                    updateActiveButton(null);
+                }
             });
-        }
-    </script>
-</body>
-</html>
-
-<!-- templates/display.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Display</title>
-    <style>
-        #content {
-            width: 100%;
-            height: 100vh;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="content"></div>
-
-    <script>
-        let currentTimestamp = '';
-        const contentDiv = document.getElementById('content');
-
-        // Connect to SSE endpoint
-        const eventSource = new EventSource('/events');
-
-        eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.type === 'file_change') {
-                updateContent(data.timestamp);
-            }
-        };
-
-        async function updateContent(timestamp) {
-            if (timestamp === currentTimestamp) return;
-            currentTimestamp = timestamp;
-
-            const response = await fetch(`/get_file_content/${timestamp}`);
-            const data = await response.json();
-
-            if (data.type === 'blank') {
-                contentDiv.innerHTML = '<h1>No file selected</h1>';
-            }
-            else if (data.type === 'html') {
-                contentDiv.innerHTML = data.content;
-            }
-            else if (data.type === 'file') {
-                contentDiv.innerHTML = `<img src="/static/${data.path}" style="max-width: 100%;">`;
-            }
-        }
-
-        // Load initial content
-        updateContent('{{ initial_file }}');
-    </script>
-</body>
+        </script>
+    </body>
 </html>

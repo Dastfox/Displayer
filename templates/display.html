@@ -1,10 +1,66 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Display</title>
-    <meta http-equiv="refresh" content="5">
-</head>
-<body>
-    {{ content | safe }}
-</body>
+<html lang="fr">
+    <head>
+        <title>Display File</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #1c2e4a;
+                background-image: url("/static/Backgrounds/Background.png");
+                background-attachment: fixed;
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-position: center;
+                margin: 0;
+                padding: 20px;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            #content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            #content img {
+                width: 100%;
+                max-height: 90vh;
+                height: auto;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            #connection-status {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            .connected {
+                background-color: #2ecc71;
+            }
+            .disconnected {
+                background-color: #e74c3c;
+            }
+            @media (max-width: 600px) {
+                body {
+                    padding: 10px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">{{content}}</div>
+        <script>
+            const ws = new WebSocket("ws://" + window.location.host + "/ws/display");
+            ws.onmessage = (event) => {
+                if (window.location.pathname !== event.data) {
+                    window.location.href = event.data;
+                }
+            };
+        </script>
+    </body>
 </html>

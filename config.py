@@ -1,1 +1,5 @@
-DISPLAY_FILE = "static/htmls/1930s-journal-layout.html"
+from pathlib import Path
+
+STATIC_DIR = Path("static")
+HOST = "0.0.0.0"
+PORT = 8000

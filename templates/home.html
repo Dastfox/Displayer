@@ -1,107 +1,130 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
-        <title>Displayer</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
+<head>
+    <title>Displayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c2e4a;
+            background-attachment: fixed;
+            background-size: cover;
+            background-repeat: no-repeat;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            color: white;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .connected {
+            background-color: #2ecc71;
+        }
+
+        .disconnected {
+            background-color: #e74c3c;
+        }
+
+        @media (max-width: 600px) {
             body {
-                font-family: Arial, sans-serif;
-                background-color: #1c2e4a;
-                background-attachment: fixed;
-                background-image: url("/static/Backgrounds/Background.png");
-                background-size: cover;
-                background-repeat: no-repeat;
-                text-align: center;
-                padding: 20px;
-                margin: 0;
-                color: white;
+                padding: 15px;
             }
+
             h1 {
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
-            h2 {
                 font-size: 20px;
-                margin-bottom: 20px;
             }
-            #connection-status {
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                padding: 5px 10px;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-            .connected {
-                background-color: #2ecc71;
-            }
-            .disconnected {
-                background-color: #e74c3c;
-            }
-            @media (max-width: 600px) {
-                body {
-                    padding: 15px;
-                }
-                h1 {
-                    font-size: 20px;
-                }
-                h2 {
-                    font-size: 16px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Vampire: La Masquarade</h1>
-        <h2>Paris at night</h2>
-        <script>
-            let ws = null;
-            let reconnectAttempts = 0;
-            const maxReconnectAttempts = 999;
-            const reconnectDelay = 3000; // 3 seconds
 
-            function connectWebSocket() {
-                ws = new WebSocket("ws://" + window.location.host + "/ws/home");
+            h2 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<script>
+    let ws = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 999;
+    const reconnectDelay = 3000; // 3 seconds
 
-                ws.onopen = () => {
-                    console.log('WebSocket connected');
-                    reconnectAttempts = 0;
-                };
+    function connectWebSocket() {
+        ws = new WebSocket("ws://" + window.location.host + "/ws/home");
 
-                ws.onmessage = (event) => {
-                    console.log('Received message:', event.data);
-                    if (window.location.pathname !== event.data) {
-                        window.location.href = event.data;
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+            reconnectAttempts = 0;
+        };
+
+        ws.onmessage = (event) => {
+            const is_object = event.data.startsWith("{");
+            console.log(event.data, typeof event.data);
+            if (window.location.pathname !== event.data && !is_object) {
+                window.location.href = event.data;
+            }
+            // if it does, parse it
+            if (is_object) {
+                const data = JSON.parse(event.data);
+                console.log("Received object", data, data.type, data.show_journal_button);
+
+                if (data.type === 'journal_state') {
+                    const journalButton = document.getElementById('journal-button');
+                    journalButton.style.display = data.show_journal_button ? 'block' : 'none';
+                } else if (data.type === "background") {
+                    if (data.path) {
+                        document.body.style.backgroundImage = `url('/static/${data.path}')`;
+                    } else {
+                        document.body.style.backgroundImage = 'none';
                     }
-                };
-
-                ws.onclose = () => {
-                    console.log('WebSocket disconnected');
-                    updateConnectionStatus(false);
-                    ws = null;
-
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        reconnectAttempts++;
-                        console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
-                        setTimeout(connectWebSocket, reconnectDelay);
-                    }
-                };
-
-                ws.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                    updateConnectionStatus(false);
-                };
+                }
             }
 
-            // Initial connection
-            connectWebSocket();
+        };
 
-            // Cleanup on page unload
-            window.onbeforeunload = () => {
-                if (ws) {
-                    ws.close();
-                }
-            };
-        </script>
-    </body>
+        ws.onclose = () => {
+            console.log('WebSocket disconnected');
+            updateConnectionStatus(false);
+            ws = null;
+
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+                setTimeout(connectWebSocket, reconnectDelay);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            updateConnectionStatus(false);
+        };
+    }
+
+    // Initial connection
+    connectWebSocket();
+
+    // Cleanup on page unload
+    window.onbeforeunload = () => {
+        if (ws) {
+            ws.close();
+        }
+    };
+</script>
+</body>
 </html>

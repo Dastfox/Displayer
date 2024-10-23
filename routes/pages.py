@@ -65,6 +65,39 @@ async def toggle_journal_button():
             "message": "Journal button state updated"
         }
     )
+
+
+@router.get("/select-background")
+async def select_background(file: str | None):
+    logger.info(f"Background selection request received: {file}")
+
+    if file == 'undefined':
+        logger.info("Clearing background")
+        ws_manager.set_background(None)
+        await ws_manager.broadcast_background("")
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Background cleared"}
+        )
+
+    is_valid, decoded_file = FileService.verify_file(file)
+
+    if not is_valid:
+        logger.error(f"Invalid background file requested: {decoded_file}")
+        return JSONResponse(
+            status_code=404,
+            content={"message": f"Background file '{decoded_file}' not found"}
+        )
+
+    ws_manager.set_background(decoded_file)
+    await ws_manager.broadcast_background(decoded_file)
+
+    return JSONResponse(
+        content={"message": f"Background '{decoded_file}' selected. All clients updated."}
+    )
+
+
+# Modify the manager route to include background section
 @router.get("/manager", response_class=HTMLResponse)
 async def manager(request: Request):
     file_structure = FileService.get_file_structure()
@@ -73,7 +106,7 @@ async def manager(request: Request):
     button_section_begin = '<div class="section files-container">'
     button_section_end = '</div>'
 
-    def create_section_html(section_name: str, items: dict) -> str:
+    def create_section_html(section_name: str, items: dict, is_background: bool = False) -> str:
         # Convert section name to title format
         section_title = section_name.replace('_', ' ').title()
 
@@ -92,38 +125,48 @@ async def manager(request: Request):
 
         # Add file buttons
         for display_name, file_path, original_name in files:
-            html += f'<button class="file-button" data-file="{file_path}" '
-            html += f'onclick="selectFile(\'{file_path}\')" '
-            html += f'title="{original_name}">{display_name}</button>'
+            if is_background:
+                html += f'<button class="file-button background-button" data-file="{file_path}" '
+                html += f'onclick="selectBackground(\'{file_path}\')" '
+                html += f'title="{original_name}">{display_name}</button>'
+            else:
+                html += f'<button class="file-button" data-file="{file_path}" '
+                html += f'onclick="selectFile(\'{file_path}\')" '
+                html += f'title="{original_name}">{display_name}</button>'
 
         html += '</div>'
         return html
 
     # Create sections HTML
     sections_html = ""
+
+    # Add backgrounds section first if it exists
+    if "Backgrounds" in file_structure:
+        sections_html += create_section_html("Backgrounds", file_structure["Backgrounds"], True)
+
+    # Add other sections
     for section_name, items in sorted(file_structure.items()):
-        if isinstance(items, dict):  # Only process directories
+        if isinstance(items, dict) and section_name not in ["Backgrounds", "htmls"]:
             sections_html += create_section_html(section_name, items)
 
-    # add begin and end
+    # Add begin and end
     sections_html = button_section_begin + sections_html + button_section_end
-    # Add journal button toggle and clear selection button
-    journal_toggle = '''
+
+    # Add controls
+    sections_html += '''
         <div class="button-controls">
             <button class="file-button journal-toggle" 
                     onclick="toggleJournalButton()"
                     data-active="{}">
                 {} Journal Button
             </button>
+            <button class="file-button clear-button" onclick="selectFile()">Clear Selection</button>
+            <button class="file-button clear-button" onclick="selectBackground()">Clear Background</button>
         </div>
     '''.format(
         str(ws_manager.show_journal_button).lower(),
         "Hide" if ws_manager.show_journal_button else "Show"
     )
-    sections_html += journal_toggle
-    sections_html += '<button class="file-button clear-button" onclick="selectFile()">Clear Selection</button>'
-
-
 
     return template.replace("{{buttons}}", sections_html)
 

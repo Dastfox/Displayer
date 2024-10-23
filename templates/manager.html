@@ -150,18 +150,23 @@
         }, 3000);
     }
 
-    function updateActiveButton(filePath) {
-        // Remove active class from all buttons
-        document.querySelectorAll('.file-button').forEach(button => {
+    function updateActiveButton(filePath, isBackground = false) {
+        // Get the correct set of buttons based on type
+        const buttonSelector = isBackground ? '.background-button' : '.file-button:not(.background-button)';
+
+        // Remove active class from the specific type of buttons
+        document.querySelectorAll(buttonSelector).forEach(button => {
             button.classList.remove('active');
         });
 
         if (!filePath) {
-            // If no file is selected, activate home button
-            document.getElementById('home-button').classList.add('active');
+            if (!isBackground) {
+                // If no file is selected, activate home button (only for regular files)
+                document.getElementById('home-button')?.classList.add('active');
+            }
         } else {
-            // Find and activate the button for the current file
-            const buttons = document.querySelectorAll('.file-button');
+            // Find and activate the button for the current file/background
+            const buttons = document.querySelectorAll(buttonSelector);
             buttons.forEach(button => {
                 if (button.getAttribute('data-file') === filePath) {
                     button.classList.add('active');
@@ -213,6 +218,21 @@
             }
         }
     });
+
+    function selectBackground(file) {
+        const encodedFile = file ? encodeURIComponent(file) : undefined;
+        fetch(`/select-background?file=${encodedFile}`)
+            .then(response => response.json())
+            .then(data => {
+                showConfirmation(data.message);
+                updateActiveButton(file, true);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showConfirmation('Error updating background');
+            });
+    }
+
 </script>
 </body>
 </html>

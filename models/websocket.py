@@ -21,6 +21,7 @@ class WebSocketManager:
             self.clients = []
             self.current_file = None
             self.current_file_url = None
+            self.show_journal_button = False
             WebSocketManager._initialized = True
             logger.info("WebSocket Manager initialized")
 
@@ -37,27 +38,39 @@ class WebSocketManager:
             logger.info(f"Client disconnected. Remaining clients: {len(self.clients)}")
             logger.info(f"Client list: {self.clients}")
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: str | dict):
         logger.info(f"Broadcasting message: {message}")
         logger.info(f"Total clients before broadcast: {len(self.clients)}")
         logger.info(f"Client list before broadcast: {self.clients}")
 
         disconnected_clients = []
+
         for client in self.clients:
             try:
-                await client.send_text(message)
+                if type(message) == dict:
+                    await client.send_json(message)
+                else:
+                    await client.send_text(message)
                 logger.info(f"Successfully sent message to client")
             except Exception as e:
                 logger.error(f"Error sending message to client: {str(e)}")
                 disconnected_clients.append(client)
 
-        for client in disconnected_clients:
-            self.disconnect(client)
+            for client in disconnected_clients:
+                self.disconnect(client)
 
     def set_current_file(self, file: str | None, url: str):
         self.current_file = file
         self.current_file_url = url
         logger.info(f"Current file set to: {file} with URL: {url}")
+
+    async def broadcast_journal_state(self):
+        """Broadcast the current journal button state to all clients"""
+        message = {
+            "type": "journal_state",
+            "show_journal_button": self.show_journal_button
+        }
+        await self.broadcast(message)
 
 
 # Create a singleton instance

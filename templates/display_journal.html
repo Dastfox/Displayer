@@ -22,7 +22,6 @@
         }
 
         .return-button {
-            display: none;
             position: fixed;
             top: 10px;
             left: 10px;
@@ -35,8 +34,8 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
-        }
 
+        }
 
         #content {
             max-width: 1200px;
@@ -59,28 +58,7 @@
     </style>
 </head>
 <body>
-<button id="journal-button" class="return-button" onclick="window.location.href = '/first';">Aller au journal</button>
+<button class="return-button" onclick="window.location.href = '/';">Retour à l'accueil</button>
 <div id="content">{{content}}</div>
-<script>
-    const ws = new WebSocket("ws://" + window.location.host + "/ws/display");
-    ws.onmessage = (event) => {
-        const is_object = event.data.startsWith("{");
-        console.log(event.data, typeof event.data);
-        if (window.location.pathname !== event.data && !is_object) {
-            window.location.href = event.data;
-        }
-        // if it does, parse it
-        if (is_object) {
-            const data = JSON.parse(event.data);
-            console.log("Received object",data, data.type, data.show_journal_button);
-
-            if (data.type === 'journal_state') {
-                const journalButton = document.getElementById('journal-button');
-                journalButton.style.display = data.show_journal_button ? 'block' : 'none';
-            }
-        }
-
-    };
-</script>
 </body>
 </html>

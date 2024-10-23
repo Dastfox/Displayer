@@ -22,11 +22,49 @@ def get_template(template_name: str) -> str:
         return f.read()
 
 
+@router.get("/first", response_class=HTMLResponse)
+async def first_html():
+    """Display the first HTML file if it exists"""
+    file_structure = FileService.get_file_structure()
+
+    # Find first HTML file
+    first_html = None
+    for section, items in file_structure.items():
+        if isinstance(items, dict):
+            for filename, filepath in items.items():
+                if filename.lower().endswith('.html'):
+                    first_html = filepath
+                    break
+        if first_html:
+            break
+
+    if not first_html:
+        return RedirectResponse(url="/")
+
+    template = get_template('display_journal.html')
+    content = FileService.get_file_content(first_html)
+    return template.replace("{{content}}", content)
+
 @router.get("/", response_class=HTMLResponse)
 async def home():
     return get_template('home.html')
 
 
+@router.get("/toggle-journal-button")
+async def toggle_journal_button():
+    """Toggle the visibility of the journal button"""
+    ws_manager.show_journal_button = not ws_manager.show_journal_button
+    logger.info(f"Journal button visibility toggled to: {ws_manager.show_journal_button}")
+
+    # Broadcast the new state to all clients
+    await ws_manager.broadcast_journal_state()
+
+    return JSONResponse(
+        content={
+            "show_journal_button": ws_manager.show_journal_button,
+            "message": "Journal button state updated"
+        }
+    )
 @router.get("/manager", response_class=HTMLResponse)
 async def manager(request: Request):
     file_structure = FileService.get_file_structure()
@@ -69,7 +107,23 @@ async def manager(request: Request):
 
     # add begin and end
     sections_html = button_section_begin + sections_html + button_section_end
+    # Add journal button toggle and clear selection button
+    journal_toggle = '''
+        <div class="button-controls">
+            <button class="file-button journal-toggle" 
+                    onclick="toggleJournalButton()"
+                    data-active="{}">
+                {} Journal Button
+            </button>
+        </div>
+    '''.format(
+        str(ws_manager.show_journal_button).lower(),
+        "Hide" if ws_manager.show_journal_button else "Show"
+    )
+    sections_html += journal_toggle
     sections_html += '<button class="file-button clear-button" onclick="selectFile()">Clear Selection</button>'
+
+
 
     return template.replace("{{buttons}}", sections_html)
 

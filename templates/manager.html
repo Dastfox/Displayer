@@ -191,6 +191,28 @@
             updateActiveButton(null);
         }
     });
+
+    function toggleJournalButton() {
+        fetch('/toggle-journal-button')
+            .then(response => response.json())
+            .then(data => {
+                const button = document.querySelector('.journal-toggle');
+                button.textContent = data.show_journal_button ? 'Hide Journal Button' : 'Show Journal Button';
+                button.dataset.active = data.show_journal_button;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    socket.addEventListener('message', function (event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'journal_state') {
+            const button = document.querySelector('.journal-toggle');
+            if (button) {
+                button.textContent = data.show_journal_button ? 'Hide Journal Button' : 'Show Journal Button';
+                button.dataset.active = data.show_journal_button;
+            }
+        }
+    });
 </script>
 </body>
 </html>

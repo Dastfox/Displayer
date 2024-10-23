@@ -49,6 +49,12 @@ async def first_html():
 async def home():
     return get_template('home.html')
 
+@router.get("/get-journal-button-state")
+async def get_journal_button_state():
+    """Return the current state of the journal button"""
+    return JSONResponse(
+        content={"show_journal_button": ws_manager.show_journal_button}
+    )
 
 @router.get("/toggle-journal-button")
 async def toggle_journal_button():
@@ -146,7 +152,7 @@ async def manager(request: Request):
 
     # Add other sections
     for section_name, items in sorted(file_structure.items()):
-        if isinstance(items, dict) and section_name not in ["Backgrounds", "htmls"]:
+        if isinstance(items, dict) and section_name not in ["Backgrounds", "htmls", "js"]:
             sections_html += create_section_html(section_name, items)
 
     # Add begin and end

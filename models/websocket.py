@@ -54,7 +54,7 @@ class WebSocketManager:
         for client in disconnected_clients:
             self.disconnect(client)
 
-    def set_current_file(self, file: str, url: str):
+    def set_current_file(self, file: str | None, url: str):
         self.current_file = file
         self.current_file_url = url
         logger.info(f"Current file set to: {file} with URL: {url}")

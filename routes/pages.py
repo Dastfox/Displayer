@@ -6,13 +6,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from service.file_service import FileService
 from models.websocket import WebSocketManager
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 router = APIRouter()
 ws_manager = WebSocketManager()
 
-# Get the base directory path
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = BASE_DIR / "templates"
 
@@ -31,16 +29,49 @@ async def home():
 
 @router.get("/manager", response_class=HTMLResponse)
 async def manager(request: Request):
-    files = FileService.get_all_files()
+    file_structure = FileService.get_file_structure()
     template = get_template('manager.html')
-    buttons = "".join(
-        f'<button class="file-button" data-file="{file}" onclick="selectFile(\'{file}\')">{file}</button>'
-        for file in files
-    )
-    buttons = "".join(
-        buttons + f"<button class='file-button' onclick=\"selectFile()\">None</button>"
-    )
-    return template.replace("{{buttons}}", buttons)
+
+    button_section_begin = '<div class="section files-container">'
+    button_section_end = '</div>'
+
+    def create_section_html(section_name: str, items: dict) -> str:
+        # Convert section name to title format
+        section_title = section_name.replace('_', ' ').title()
+
+        html = f'<div class="section">'
+        html += f'<h2 class="section-title">{section_title}</h2>'
+
+        # Sort and process files
+        files = []
+        for file_name in sorted(items.keys()):
+            file_path = items[file_name]
+            # Get clean name without extension and path
+            clean_name = Path(file_name).stem
+            # Convert to title case and replace underscores with spaces
+            display_name = clean_name.replace('_', ' ').title()
+            files.append((display_name, file_path, file_name))
+
+        # Add file buttons
+        for display_name, file_path, original_name in files:
+            html += f'<button class="file-button" data-file="{file_path}" '
+            html += f'onclick="selectFile(\'{file_path}\')" '
+            html += f'title="{original_name}">{display_name}</button>'
+
+        html += '</div>'
+        return html
+
+    # Create sections HTML
+    sections_html = ""
+    for section_name, items in sorted(file_structure.items()):
+        if isinstance(items, dict):  # Only process directories
+            sections_html += create_section_html(section_name, items)
+
+    # add begin and end
+    sections_html = button_section_begin + sections_html + button_section_end
+    sections_html += '<button class="file-button clear-button" onclick="selectFile()">Clear Selection</button>'
+
+    return template.replace("{{buttons}}", sections_html)
 
 
 @router.get("/select")
@@ -56,7 +87,6 @@ async def select_file(file: str | None):
             status_code=200,
             content={"message": "Redirecting to home page"}
         )
-
 
     elif not is_valid:
         logger.error(f"Invalid file requested: {decoded_file}")

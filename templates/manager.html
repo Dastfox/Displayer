@@ -1,161 +1,195 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
-        <title>File Manager</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
+<head>
+    <title>Displayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c2e4a;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            color: white;
+        }
+
+        h1 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        .files-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .file-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            color: white;
+            background-color: #2c3e60;
+            border: 1px solid #34495e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            word-break: break-all;
+        }
+
+        .file-button:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+
+        .file-button:active {
+            transform: translateY(0);
+        }
+
+        .file-button.active {
+            background-color: #27ae60;
+            border-color: #2ecc71;
+        }
+
+        .file-button.active:hover {
+            background-color: #2ecc71;
+        }
+
+        .home-button {
+            background-color: #c0392b;
+            border-color: #e74c3c;
+        }
+
+        .home-button:hover {
+            background-color: #e74c3c;
+        }
+
+        .home-button.active {
+            background-color: #27ae60;
+            border-color: #2ecc71;
+        }
+
+        #confirmation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #confirmation.show {
+            opacity: 1;
+        }
+
+        .clear-button {
+            background-color: #e74c3c;
+            border-color: #c0392b;
+        }
+
+        .clear-button:hover {
+            background-color: #c0392b;
+        }
+
+        @media (max-width: 600px) {
             body {
-                font-family: Arial, sans-serif;
-                background-color: #1c2e4a;
-                text-align: center;
-                padding: 20px;
-                margin: 0;
-                color: white;
-            }
-            h1 {
-                color: white;
-                font-size: 24px;
-                margin-bottom: 30px;
-            }
-            .files-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                gap: 15px;
                 padding: 10px;
             }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+
             .file-button {
-                width: 100%;
-                padding: 15px;
-                font-size: 16px;
-                color: white;
-                background-color: #2c3e60;
-                border: 1px solid #34495e;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: background-color 0.3s, transform 0.2s;
-                word-break: break-all;
+                padding: 12px;
+                font-size: 14px;
             }
-            .file-button:hover {
-                background-color: #34495e;
-                transform: translateY(-2px);
-            }
-            .file-button:active {
-                transform: translateY(0);
-            }
-            .file-button.active {
-                background-color: #27ae60;
-                border-color: #2ecc71;
-            }
-            .file-button.active:hover {
-                background-color: #2ecc71;
-            }
-            .home-button {
-                background-color: #c0392b;
-                border-color: #e74c3c;
-            }
-            .home-button:hover {
-                background-color: #e74c3c;
-            }
-            .home-button.active {
-                background-color: #27ae60;
-                border-color: #2ecc71;
-            }
-            #confirmation {
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background-color: rgba(46, 204, 113, 0.9);
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                font-weight: bold;
-                opacity: 0;
-                transition: opacity 0.3s;
-            }
-            #confirmation.show {
-                opacity: 1;
-            }
-            @media (max-width: 600px) {
-                body {
-                    padding: 10px;
-                }
-                h1 {
-                    font-size: 20px;
-                    margin-bottom: 20px;
-                }
-                .file-button {
-                    padding: 12px;
-                    font-size: 14px;
-                }
-                .files-container {
-                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                    gap: 10px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <h1>File Manager</h1>
-        <div class="files-container">
-            {{buttons}}
-        </div>
-        <p id="confirmation"></p>
-       <script>
-            const ws = new WebSocket("ws://" + window.location.host + "/ws/manager");
+        }
 
-            function showConfirmation(message) {
-                const confirmation = document.getElementById('confirmation');
-                confirmation.innerText = message;
-                confirmation.classList.add('show');
-                setTimeout(() => {
-                    confirmation.classList.remove('show');
-                }, 3000);
+        /* For when there are fewer items */
+        @media (min-width: 1000px) {
+            .files-container:has(> :nth-last-child(-n+2):first-child) {
+                grid-template-columns: repeat(2, 250px);
             }
+        }
 
-            function updateActiveButton(filePath) {
-                // Remove active class from all buttons
-                document.querySelectorAll('.file-button').forEach(button => {
-                    button.classList.remove('active');
-                });
-
-                if (!filePath) {
-                    // If no file is selected, activate home button
-                    document.getElementById('home-button').classList.add('active');
-                } else {
-                    // Find and activate the button for the current file
-                    const buttons = document.querySelectorAll('.file-button');
-                    buttons.forEach(button => {
-                        if (button.getAttribute('data-file') === filePath) {
-                            button.classList.add('active');
-                        }
-                    });
-                }
+        /* For very small screens */
+        @media (max-width: 540px) {
+            .files-container {
+                grid-template-columns: minmax(200px, 1fr);
             }
+        }
 
-            function selectFile(file) {
-                const encodedFile = encodeURIComponent(file);
-                fetch('/select?file=' + encodedFile, { method: 'GET' })
-                    .then(response => response.json())
-                    .then(data => {
-                        showConfirmation(data.message);
-                        updateActiveButton(file);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showConfirmation('Error selecting file');
-                    });
-            }
+    </style>
+</head>
+<body>
+<h1>File Manager</h1>
+{{buttons}}
+<p id="confirmation"></p>
+<script>
+    const ws = new WebSocket("ws://" + window.location.host + "/ws/manager");
 
-            // Initialize active button based on current URL
-            document.addEventListener('DOMContentLoaded', () => {
-                const currentPath = window.location.pathname;
-                if (currentPath === '/') {
-                    updateActiveButton(null);
+    function showConfirmation(message) {
+        const confirmation = document.getElementById('confirmation');
+        confirmation.innerText = message;
+        confirmation.classList.add('show');
+        setTimeout(() => {
+            confirmation.classList.remove('show');
+        }, 3000);
+    }
+
+    function updateActiveButton(filePath) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.file-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        if (!filePath) {
+            // If no file is selected, activate home button
+            document.getElementById('home-button').classList.add('active');
+        } else {
+            // Find and activate the button for the current file
+            const buttons = document.querySelectorAll('.file-button');
+            buttons.forEach(button => {
+                if (button.getAttribute('data-file') === filePath) {
+                    button.classList.add('active');
                 }
             });
-        </script>
-    </body>
+        }
+    }
+
+    function selectFile(file) {
+        const encodedFile = encodeURIComponent(file);
+        fetch('/select?file=' + encodedFile, {method: 'GET'})
+            .then(response => response.json())
+            .then(data => {
+                showConfirmation(data.message);
+                updateActiveButton(file);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showConfirmation('Error selecting file');
+            });
+    }
+
+    // Initialize active button based on current URL
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/') {
+            updateActiveButton(null);
+        }
+    });
+</script>
+</body>
 </html>

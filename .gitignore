@@ -1,3 +1,5 @@
-static/future_games/*
-static/future_games
+static/player-accessible-ressources/*
 .venv/
+!submodule/htmls/
+!submodule/js/
+!submodule/css/

@@ -147,12 +147,12 @@ async def manager(request: Request):
     sections_html = ""
 
     # Add backgrounds section first if it exists
-    if "Backgrounds" in file_structure:
-        sections_html += create_section_html("Backgrounds", file_structure["Backgrounds"], True)
+    if "backgrounds" in file_structure:
+        sections_html += create_section_html("backgrounds", file_structure["backgrounds"], True)
 
     # Add other sections
     for section_name, items in sorted(file_structure.items()):
-        if isinstance(items, dict) and section_name not in ["Backgrounds", "htmls", "js"]:
+        if isinstance(items, dict) and section_name not in ["backgrounds", "htmls", "js"]:
             sections_html += create_section_html(section_name, items)
 
     # Add begin and end

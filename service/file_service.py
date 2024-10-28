@@ -7,8 +7,7 @@ from pathlib import Path
 from config import STATIC_DIR
 
 EXCLUDED_DIRECTORIES = [
-    # "Backgrounds",
-    "unreachable",
+    "old",
 ]
 
 

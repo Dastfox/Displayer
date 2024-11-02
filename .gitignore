@@ -1,5 +1,1 @@
-static/player-accessible-ressources/*
-.venv/
-!submodule/htmls/
-!submodule/js/
-!submodule/css/
+

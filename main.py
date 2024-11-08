@@ -8,6 +8,7 @@ from config import HOST, PORT, STATIC_DIR
 
 app = FastAPI()
 
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

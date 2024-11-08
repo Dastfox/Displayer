@@ -4,6 +4,23 @@
     <title>Displayer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+
+        .return-button {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            width: 10%;
+            font-size: 10px;
+            color: white;
+            background-color: #2c3e60;
+            border: 1px solid #34495e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background-color: #1c2e4a;
@@ -59,7 +76,9 @@
     </style>
 </head>
 <body>
-<script src="/js/home.js">
+<button id="journal-button" class="return-button" onclick="window.location.href = '/first';">Aller au journal</button>
+
+<script src="static/js/home.js">
 </script>
 </body>
 </html>

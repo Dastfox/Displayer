@@ -4,6 +4,7 @@
     <title>Displayer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+
         body {
             font-family: Arial, sans-serif;
             background-color: #1c2e4a;
@@ -226,6 +227,7 @@
     });
 
     function selectBackground(file) {
+        console.log('Selecting background:', file);
         const encodedFile = file ? encodeURIComponent(file) : undefined;
         fetch(`/select-background?file=${encodedFile}`)
             .then(response => response.json())
